@@ -12,7 +12,7 @@ from nets.superpixels_graph_classification.mo_net import MoNet as MoNet_
 from nets.superpixels_graph_classification.mlp_net import MLPNet
 from nets.superpixels_graph_classification.ring_gnn_net import RingGNNNet
 from nets.superpixels_graph_classification.three_wl_gnn_net import ThreeWLGNNNet
-from nets.superpixels_graph_classification.spe_transform import SPE_TransformerNet
+from nets.superpixels_graph_classification.spe_transformer import SPE_TransformerNet
 
 def GatedGCN(net_params):
     return GatedGCNNet(net_params)
