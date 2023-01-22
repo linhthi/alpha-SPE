@@ -12,7 +12,7 @@ import time
 
 import csv
 from sklearn.model_selection import StratifiedShuffleSplit
-import precompute_features as pf
+import data.precompute_features as pf
 
 
 
