@@ -13,8 +13,8 @@ def load_data(dataset):
         ; dataset object
     """
     # handling for MNIST or CIFAR Superpixels
-    if DATASET_NAME == 'MNIST' or DATASET_NAME == 'CIFAR10':
-        return SuperPixDataset(DATASET_NAME)
+    if dataset == 'MNIST' or dataset == 'CIFAR10':
+        return SuperPixDataset(dataset)
 
     # handling for SBM datasets
     SBM_DATASETS = ['SBM_CLUSTER', 'SBM_PATTERN']
