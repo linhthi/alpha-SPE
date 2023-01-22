@@ -1,0 +1,42 @@
+{
+    "gpu": {
+        "use": false,
+        "id": 0
+    },
+
+    "model": "GAT",
+    "dataset": "cora",
+
+    "out_dir": "out/citation/cora/full/GAT",
+
+    "params": {
+        "seed": 41,
+        "epochs": 200,
+        "batch_size": 512,
+        "init_lr": 0.001,
+        "lr_reduce_factor": 0.5,
+        "lr_schedule_patience": 20,
+        "min_lr": 1e-4,
+        "weight_decay": 0.0,
+        "print_epoch_interval": 1,
+        "max_time": 24
+    },
+
+    "net_params": {
+        "model": "gat",
+        "full_graph": true,
+        "gamma": 1e-1,
+        "m": 10,
+
+        "n_layers": 3,
+        "hidden_dim": 128,
+        "out_dim": 128,
+        "heads": 8,
+        "n_out_heads": 1,
+
+        "residual": true,
+        "feat_drop": 0.6,
+        "attn_drop": 0.6,
+        "negative_slope": 0.2
+    }
+}

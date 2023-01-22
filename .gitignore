@@ -1,0 +1,11 @@
+/data/SBMs/SBM_CLUSTER.pkl
+/out/
+/train/__pycache__/
+/data/__pycache__/
+/nets/__pycache__/
+/layers/__pycache__/
+/nets/citations/__pycache__/
+/out/
+/train/__pycache__/
+/.idea/
+/.vscode/
