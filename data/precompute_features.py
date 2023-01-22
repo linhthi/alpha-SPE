@@ -87,12 +87,11 @@ def add_structural_feats(g):
     for input_nodes, output_nodes, subgraph in dataloader:
         # extract eigen val and vector from subgraph and to contruct the structure of each node
 
-        EigVals, EigVecs = pf.laplace_decomp(subgraph, 32)
+        EigVals, EigVecs = laplace_decomp(subgraph, 32)
         SE.append(EigVals)
 
     SE = np.asarray(SE)
     SE = torch.Tensor(SE)
-    g.ndata['SE'] = SE
-    return g
+    return SE
 
 
