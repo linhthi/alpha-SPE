@@ -67,7 +67,7 @@ class SPE_TransformerNet(nn.Module):
 
     def forward(self, g, h, e):
         
-        EigVals, EigVecs = g.EigVals, g.EigVecs
+        EigVals, EigVecs = g.ndata['EigVals'], g.ndata['EigVecs']
         # mEigVals = EigVals[:self.m]
         mEigVecs = EigVecs[:, :self.m]
         # print(mEigVecs.shape, mEigVals.)
