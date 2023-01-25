@@ -68,6 +68,7 @@ class STransformer(nn.Module):
     def forward(self, g, h):
         
         EigVals, EigVecs = g.EigVals, g.EigVecs
+        # print(EigVals)
         # mEigVals = EigVals[:self.m]
         mEigVecs = EigVecs[:, :self.m]
         # print(mEigVecs.shape, mEigVals.)

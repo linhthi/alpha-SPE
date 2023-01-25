@@ -39,7 +39,7 @@ def SPETransformer(net_params):
 def gnn_model(LPE, net_params):
     model = {
         'edge': EdgeLPE,
-        'node': NodeLPE,
+        'nodeLPE': NodeLPE,
         'none': NoLPE,
         'gcn': GCN,
         'graphsage': GraphSAGE, 

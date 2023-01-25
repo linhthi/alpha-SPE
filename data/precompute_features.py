@@ -14,12 +14,16 @@ def laplace_decomp(g, max_freqs):
     N = torch.Tensor(dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5).diag()
     # print((N))
     L = torch.eye(g.num_nodes()) - N * A * N
+    # print(L)
 
     EigVals, EigVecs = np.linalg.eigh(L.numpy())
+    # print(EigVals)
+    # print(EigVecs)
 
     # Normalize and pad EigenVectors
     EigVecs = torch.from_numpy(EigVecs).float()
     EigVecs = F.normalize(EigVecs, p=2, dim=1, eps=1e-12, out=None)
+    
     EigVals = np.sort(np.abs(np.real(EigVals)))
 
     if n < max_freqs:
@@ -80,18 +84,26 @@ def add_structural_feats(g):
     :return:
     """
     # Add local structural to encoding (SE)
-    sampler = dgl.dataloading.ShaDowKHopSampler([10, 5, 5]) # using 3 hop
-    dataloader = dgl.dataloading.DataLoader(g, torch.arange(g.num_nodes()), sampler, 
-                                    batch_size=1, shuffle=False, drop_last=False)
-    SE = []
-    for input_nodes, output_nodes, subgraph in dataloader:
-        # extract eigen val and vector from subgraph and to contruct the structure of each node
+    # sampler = dgl.dataloading.ShaDowKHopSampler([10, 5, 5]) # using 3 hop
+    # dataloader = dgl.dataloading.DataLoader(g, torch.arange(g.num_nodes()), sampler, 
+    #                                 batch_size=1, shuffle=False, drop_last=False)
+    subgraphs = []
+    for node in g.nodes():
+        subgraphs.append(dgl.khop_subgraph(g, node, 2))
+    # SE = []
+    # for input_nodes, output_nodes, subgraph in dataloader:
+    #     # extract eigen val and vector from subgraph and to contruct the structure of each node
 
-        EigVals, EigVecs = laplace_decomp(subgraph, 32)
-        SE.append(EigVals)
-
+    #     EigVals, EigVecs = laplace_decomp(subgraph, 32)
+    #     SE.append(EigVals)
+    eigenvalues = []
+    for subgraph in subgraphs:
+        adj = subgraph.adjacency_matrix().to_dense()
+        eigenvalues.append(np.linalg.eigvals(adj.A))
+    SE = eigenvalues
     SE = np.asarray(SE)
     SE = torch.Tensor(SE)
+    # print(SE)
     return SE
 
 

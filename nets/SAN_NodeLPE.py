@@ -48,8 +48,8 @@ class SAN_NodeLPE(nn.Module):
         self.in_feat_dropout = nn.Dropout(in_feat_dropout)
         
         #Remove some embedding dimensions to make room for concatenating laplace encoding
-        self.embedding_h = nn.Embedding(in_dim_node, GT_hidden_dim-LPE_dim)
-        self.embedding_e = nn.Embedding(2, GT_hidden_dim)
+        self.embedding_h = nn.Linear(in_dim_node, GT_hidden_dim-LPE_dim)
+        # self.embedding_e = nn.Linear(2, GT_hidden_dim)
         self.linear_A = nn.Linear(2, LPE_dim)
         
         encoder_layer = nn.TransformerEncoderLayer(d_model=LPE_dim, nhead=LPE_n_heads)
@@ -62,11 +62,18 @@ class SAN_NodeLPE(nn.Module):
         self.MLP_layer = MLPReadout(GT_out_dim, self.n_classes)
 
 
-    def forward(self, g, h, e, EigVecs, EigVals):
+    def forward(self, g, h, e=None):
+        EigVals = torch.Tensor(g.EigVals)
+        # EigVals = EigVals.unsqueeze(0)
+        s = EigVals.shape[0]
+        EigVals = EigVals.repeat(s,1).unsqueeze(2)
+        EigVecs = g.EigVecs
+        print(EigVals.shape, EigVecs.shape)
         
         # input embedding
+        # h = torch.LongTensor(h)
         h = self.embedding_h(h)
-        e = self.embedding_e(e) 
+        # e = self.embedding_e(e) 
           
         PosEnc = torch.cat((EigVecs.unsqueeze(2), EigVals), dim=2).float() # (Num nodes) x (Num Eigenvectors) x 2
         empty_mask = torch.isnan(PosEnc) # (Num nodes) x (Num Eigenvectors) x 2
@@ -92,7 +99,7 @@ class SAN_NodeLPE(nn.Module):
         
         # GraphTransformer Layers
         for conv in self.layers:
-            h, e = conv(g, h, e)
+            h = conv(g, h)
             
         # output
         h_out = self.MLP_layer(h)
