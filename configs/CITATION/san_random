@@ -12,7 +12,7 @@
     "params": {
         "seed": 42,
         "epochs": 1000,
-        "batch_size": 256,
+        "batch_size": 1,
         "init_lr": 0.001,
         "lr_reduce_factor": 0.5,
         "lr_schedule_patience": 60,
@@ -29,14 +29,14 @@
         "m": 20,
 
         "alpha": 0.2,
-        "k": 32,
+        "k": 8,
         "gamma": 1e-3,
 
         "n_layers": 3,
         "hidden_dim": 32,
         "out_dim": 32,
 
-        "LPE_layers": 1,
+        "LPE_layers": 4,
         "LPE_dim": 32,
         "LPE_n_heads": 4,
 
@@ -48,8 +48,8 @@
 
         "residual": true,
         "readout": "mean",
-        "in_feat_dropout": 0.7,
-        "dropout": 0.7,
+        "in_feat_dropout": 0.0,
+        "dropout": 0.0,
         "layer_norm": true,
         "batch_norm": true
     }

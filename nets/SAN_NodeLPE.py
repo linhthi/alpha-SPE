@@ -12,7 +12,7 @@ import numpy as np
     Graph Transformer
     
 """
-from layers.gt_layer import GraphTransformerLayer
+from layers.gt import GraphTransformerLayer
 from layers.mlp_readout_layer import MLPReadout
 
 class SAN_NodeLPE(nn.Module):
@@ -25,6 +25,7 @@ class SAN_NodeLPE(nn.Module):
         
         full_graph = net_params['full_graph']
         gamma = net_params['gamma']
+        self.m = net_params['m']
         
         LPE_layers = net_params['LPE_layers']
         LPE_dim = net_params['LPE_dim']
@@ -55,20 +56,26 @@ class SAN_NodeLPE(nn.Module):
         encoder_layer = nn.TransformerEncoderLayer(d_model=LPE_dim, nhead=LPE_n_heads)
         self.PE_Transformer = nn.TransformerEncoder(encoder_layer, num_layers=LPE_layers)
         
-        self.layers = nn.ModuleList([ GraphTransformerLayer(gamma, GT_hidden_dim, GT_hidden_dim, GT_n_heads, full_graph, dropout, self.layer_norm, self.batch_norm, self.residual) for _ in range(GT_layers-1) ])
+        # self.layers = nn.ModuleList([ GraphTransformerLayer(gamma, GT_hidden_dim, GT_hidden_dim, GT_n_heads, full_graph, dropout, self.layer_norm, self.batch_norm, self.residual) for _ in range(GT_layers-1) ])
         
-        self.layers.append(GraphTransformerLayer(gamma, GT_hidden_dim, GT_out_dim, GT_n_heads, full_graph, dropout, self.layer_norm, self.batch_norm, self.residual))
+        # self.layers.append(GraphTransformerLayer(gamma, GT_hidden_dim, GT_out_dim, GT_n_heads, full_graph, dropout, self.layer_norm, self.batch_norm, self.residual))
+        self.layers = nn.ModuleList([ GraphTransformerLayer(GT_hidden_dim, GT_hidden_dim, GT_n_heads, dropout, self.layer_norm, self.batch_norm, self.residual) for _ in range(GT_layers-1) ])
+        
+        self.layers.append(GraphTransformerLayer(GT_hidden_dim, GT_out_dim, GT_n_heads, dropout, self.layer_norm, self.batch_norm, self.residual))
+
 
         self.MLP_layer = MLPReadout(GT_out_dim, self.n_classes)
 
 
     def forward(self, g, h, e=None):
         EigVals = torch.Tensor(g.EigVals)
+        EigVecs = g.EigVecs
+        m = self.m
         # EigVals = EigVals.unsqueeze(0)
         s = EigVals.shape[0]
+        EigVals, EigVecs = EigVals[: m], EigVecs[:, :m]
         EigVals = EigVals.repeat(s,1).unsqueeze(2)
-        EigVecs = g.EigVecs
-        print(EigVals.shape, EigVecs.shape)
+        # print(EigVals.shape, EigVecs.shape)
         
         # input embedding
         # h = torch.LongTensor(h)
