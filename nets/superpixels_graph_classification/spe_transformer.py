@@ -69,7 +69,7 @@ class SPE_TransformerNet(nn.Module):
         
         EigVals, EigVecs = g.ndata['EigVals'], g.ndata['EigVecs']
         # mEigVals = EigVals[:self.m]
-        mEigVecs = EigVecs[:, :self.m]
+        mEigVecs = EigVecs[:, :self.m].to(self.device)
         # print(mEigVecs.shape, mEigVals.)
 
         h_se = g.ndata['SE']

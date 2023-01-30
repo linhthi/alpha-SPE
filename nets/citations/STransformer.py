@@ -70,7 +70,7 @@ class STransformer(nn.Module):
         EigVals, EigVecs = g.EigVals, g.EigVecs
         # print(EigVals)
         # mEigVals = EigVals[:self.m]
-        mEigVecs = EigVecs[:, :self.m]
+        mEigVecs = EigVecs[:, :self.m].to(self.device)
         # print(mEigVecs.shape, mEigVals.)
 
         h_se = g.ndata['SE']

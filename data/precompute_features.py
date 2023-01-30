@@ -84,23 +84,23 @@ def add_structural_feats(g):
     :return:
     """
     # Add local structural to encoding (SE)
-    # sampler = dgl.dataloading.ShaDowKHopSampler([10, 5, 5]) # using 3 hop
-    # dataloader = dgl.dataloading.DataLoader(g, torch.arange(g.num_nodes()), sampler, 
-    #                                 batch_size=1, shuffle=False, drop_last=False)
-    subgraphs = []
-    for node in g.nodes():
-        subgraphs.append(dgl.khop_subgraph(g, node, 2))
-    # SE = []
-    # for input_nodes, output_nodes, subgraph in dataloader:
-    #     # extract eigen val and vector from subgraph and to contruct the structure of each node
+    sampler = dgl.dataloading.ShaDowKHopSampler([10, 5, 5]) # using 3 hop
+    dataloader = dgl.dataloading.DataLoader(g, torch.arange(g.num_nodes()), sampler, 
+                                    batch_size=1, shuffle=False, drop_last=False)
+    # subgraphs = []
+    # for node in g.nodes():
+    #     subgraphs.append(dgl.khop_subgraph(g, node, 2))
+    SE = []
+    for input_nodes, output_nodes, subgraph in dataloader:
+        # extract eigen val and vector from subgraph and to contruct the structure of each node
 
-    #     EigVals, EigVecs = laplace_decomp(subgraph, 32)
-    #     SE.append(EigVals)
-    eigenvalues = []
-    for subgraph in subgraphs:
-        adj = subgraph.adjacency_matrix().to_dense()
-        eigenvalues.append(np.linalg.eigvals(adj.A))
-    SE = eigenvalues
+        EigVals, EigVecs = laplace_decomp(subgraph, 32)
+        SE.append(EigVals)
+    # eigenvalues = []
+    # for subgraph in subgraphs:
+    #     adj = subgraph.adjacency_matrix().to_dense()
+    #     eigenvalues.append(np.linalg.eigvals(adj.A))
+    # SE = eigenvalues
     SE = np.asarray(SE)
     SE = torch.Tensor(SE)
     # print(SE)
