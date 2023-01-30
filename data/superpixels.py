@@ -291,7 +291,7 @@ class SuperPixDataset(torch.utils.data.Dataset):
             # Adding postional features: Eigen values and Eigen vectors
             FullEigVals, FullEigVecs = pf.laplace_decomp(graph, graph.num_nodes())
             graphs[idx].ndata['EigVals'] = torch.Tensor(FullEigVals)
-            graphs[idx].ndata['EigVecs'] = torch.Tensor(FullEigVecs)
+            graphs[idx].ndata['EigVecs'] = torch.Tensor(FullEigVecs[:, 16])
         batched_graph = dgl.batch(graphs)
         
         return batched_graph, labels

@@ -11,8 +11,8 @@
 
     "params": {
         "seed": 42,
-        "epochs": 1000,
-        "batch_size": 256,
+        "epochs": 100,
+        "batch_size": 64,
         "init_lr": 0.001,
         "lr_reduce_factor": 0.5,
         "lr_schedule_patience": 60,
@@ -28,7 +28,7 @@
         "laplace_decomp": true,
         "m": 20,
 
-        "alpha": 0.0,
+        "alpha": 0.2,
         "k": 32,
 
         "n_layers": 3,
@@ -40,10 +40,10 @@
         "LSE_n_heads": 4,
 
         "GT_layers": 4,
-        "GT_hidden_dim": 128,
-        "GT_out_dim": 128,
+        "GT_hidden_dim": 64,
+        "GT_out_dim": 64,
         "GT_n_heads": 8, 
-        "spe_hidden_dim": 128,
+        "spe_hidden_dim": 32,
 
         "residual": true,
         "readout": "mean",
