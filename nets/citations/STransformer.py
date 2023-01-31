@@ -13,6 +13,8 @@ import numpy as np
 from layers.gt import GraphTransformerLayer
 from layers.mlp_readout_layer import MLPReadout
 from layers.mlp import MLP
+from scipy.sparse.linalg import norm
+from scipy import sparse as sp
 
 class STransformer(nn.Module):
 
@@ -39,6 +41,7 @@ class STransformer(nn.Module):
         in_feat_dropout = net_params['in_feat_dropout']
         dropout = net_params['dropout']
         spe_hidden_dim = net_params['spe_hidden_dim']
+        self.spe_hidden_dim = spe_hidden_dim
         k = net_params['k']
         hidden_dim = net_params['hidden_dim']
         self.alpha = net_params['alpha']
@@ -54,7 +57,7 @@ class STransformer(nn.Module):
         
         self.embedding_h = nn.Linear(in_dim_node, GT_hidden_dim-spe_hidden_dim)
         self.embedding_se = MLP(in_dim=k, hidden_dim=hidden_dim, out_dim=spe_hidden_dim, n_layers=4, dropout=dropout)
-        self.embedding_pe = MLP(in_dim=self.m, hidden_dim=hidden_dim, out_dim=spe_hidden_dim, n_layers=4, dropout=dropout)
+        self.embedding_pe = MLP(in_dim=self.m*2, hidden_dim=hidden_dim, out_dim=spe_hidden_dim, n_layers=4, dropout=dropout)
 
         encoder_layer = nn.TransformerEncoderLayer(d_model=LSE_dim, nhead=LSE_n_heads)
         self.SE_Transformer = nn.TransformerEncoder(encoder_layer, num_layers=LSE_layers)
@@ -63,21 +66,28 @@ class STransformer(nn.Module):
         self.layers.append(GraphTransformerLayer(GT_hidden_dim, GT_out_dim, GT_n_heads, dropout, self.layer_norm, self.batch_norm, self.residual))
 
         self.MLP_layer = MLPReadout(GT_out_dim, self.n_classes)
+        self.g = None
 
 
     def forward(self, g, h):
         
         EigVals, EigVecs = g.EigVals, g.EigVecs
+        # mEigVecs = EigVecs[:, :self.m].to(self.device) # previous version
+        m = self.m
         # print(EigVals)
-        # mEigVals = EigVals[:self.m]
-        mEigVecs = EigVecs[:, :self.m].to(self.device)
+        k = len(EigVals)
+        mEigVals = torch.Tensor(EigVals[:m])
+        mEigVals = mEigVals.repeat(k, 1) 
+        mEigVecs = EigVecs[:, :m]
+        PE_raw = torch.cat([mEigVals, mEigVecs], dim=1).to(self.device)
         # print(mEigVecs.shape, mEigVals.)
 
         h_se = g.ndata['SE']
         h_se = self.embedding_se(h_se)
-        h_pe = mEigVecs
+        h_pe = PE_raw
         h_pe = self.embedding_pe(h_pe)
         h_spe = (1-self.alpha)*h_pe + self.alpha*h_se
+        g.ndata['SPE'] = h_spe
 
         h = self.embedding_h(h)
         h = self.in_feat_dropout(h)
@@ -90,6 +100,7 @@ class STransformer(nn.Module):
             
         # output
         h_out = self.MLP_layer(h)
+        self.g = g
 
         return h_out
     
@@ -107,9 +118,32 @@ class STransformer(nn.Module):
         
         # weighted cross-entropy for unbalanced classes
         criterion = nn.CrossEntropyLoss(weight=weight)
-        loss = criterion(pred, label)
+        loss_a = criterion(pred, label)
 
-        return loss
+        g = self.g
+        n = g.number_of_nodes()
+        A = g.adjacency_matrix(scipy_fmt="csr")
+        N = sp.diags(dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5, dtype=float)
+        L = sp.eye(n) - N * A * N
+        # Loss location encoding
+        p = g.ndata['SPE']
+        pT = torch.transpose(p, 1, 0)
+        loss_b_1 = torch.trace(torch.mm(torch.mm(pT, torch.Tensor(L.todense()).to(self.device)), p))
+
+        # Correct batch-graph wise loss_b_2 implementation; using a block diagonal matrix
+        # bg = dgl.unbatch(g)
+        # batch_size = len(bg)
+        # P = sp.block_diag(p)
+        # PTP_In = P.T * P - sp.eye(P)
+        # loss_b_2 = torch.tensor(norm(PTP_In, 'fro')**2).float().to(self.device)
+
+        # loss_b = ( loss_b_1 + 100 * loss_b_2 ) / ( self.spe_hidden_dim * n) 
+        loss_b = loss_b_1
+
+        # /del bg, P, PTP_In, loss_b_1, loss_b_2
+        del loss_b_1
+
+        return loss_a + 0.001*loss_b
 
 
 
