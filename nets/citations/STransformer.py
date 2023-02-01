@@ -143,7 +143,7 @@ class STransformer(nn.Module):
         # /del bg, P, PTP_In, loss_b_1, loss_b_2
         del loss_b_1
 
-        return loss_a + 0.001*loss_b
+        return loss_a + 1*loss_b
 
 
 
