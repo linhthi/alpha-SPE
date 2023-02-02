@@ -6,7 +6,7 @@ from dgl.data import CoraGraphDataset, CiteseerGraphDataset, RedditDataset, Pubm
 from data.citation_data import CitationDataset
 from data.superpixels import SuperPixDataset
 
-def load_data(dataset):
+def load_data(dataset, use_spe=False):
     """
         This function is called in the main_xx.py file
         returns:
@@ -22,7 +22,10 @@ def load_data(dataset):
         return SBMsDataset(dataset)
 
     if dataset == 'CORA' or dataset == 'CITESEER' or dataset == 'PUBMED':
-        return CitationDataset(dataset)
+        data = CitationDataset(dataset)
+        if use_spe == True:
+            data.add_spe()
+        return data
 
     if dataset == 'REDDIT':
         return RedditDataset()

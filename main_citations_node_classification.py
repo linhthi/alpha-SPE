@@ -260,6 +260,7 @@ def main():
     parser.add_argument('--full_graph', help="Please give a value for full_graph")
     parser.add_argument('--gamma', help="Please give a value for gamma")
     parser.add_argument('--m', help="Please give a value for m")
+    parser.add_argument('--use_spe', help="Please give a value for use_spe")
 
     parser.add_argument('--n_layers', help="Please give a value for GCN layers")
     parser.add_argument('--hidden_dim', help="Please give a value for GT_hidden_dim")
@@ -290,7 +291,7 @@ def main():
         DATASET_NAME = args.dataset
     else:
         DATASET_NAME = config['dataset']
-    dataset = load_data(DATASET_NAME)
+    dataset = load_data(DATASET_NAME, use_spe=config['use_spe'])
     if args.out_dir is not None:
         out_dir = args.out_dir
     else:
@@ -330,6 +331,8 @@ def main():
         net_params['gamma'] = float(args.gamma)
     if args.m is not None:
         net_params['m'] = int(args.m)
+    if args.use_spe is not None:
+        net_params['use_spe'] = True if args.use_spe == 'True' else False
 
     if args.n_layers is not None:
         net_params['n_layers'] = int(args.n_layers)
