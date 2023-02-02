@@ -26,9 +26,9 @@
         "model": "spe",
         "full_graph": true,
         "laplace_decomp": true,
-        "m": 20,
+        "m": 16,
 
-        "alpha": 0.0,
+        "alpha": 0.1,
         "k": 32,
 
         "n_layers": 3,

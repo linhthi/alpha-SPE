@@ -9,15 +9,12 @@ import dgl
 
 def laplace_decomp(g, max_freqs):
     n = g.num_nodes()
-    #A = g.adj()
+    A = g.adj()
     # print((A))
-    #N = torch.Tensor(dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5).diag()
+    N = torch.Tensor(dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5).diag()
     # print((N))
-    #L = torch.eye(g.num_nodes()) - N * A * N
-    # print(L)
-    A = g.adj().to_dense()
-    N = torch.diag(torch.Tensor(dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5))
     L = torch.eye(g.num_nodes()) - N * A * N
+    # print(L)
 
     EigVals, EigVecs = np.linalg.eigh(L.numpy())
     # print(EigVals)
