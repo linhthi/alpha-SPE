@@ -22,6 +22,8 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 
+from nets.load_net import gnn_model
+
 
 class DotDict(dict):
     def __init__(self, **kwds):
@@ -59,14 +61,16 @@ def gpu_setup(use_gpu, gpu_id):
 
 
 def view_model_param(net_params):
-    model = GCNNet(net_params)
+    # model = GCNNet(net_params)
+    model = gnn_model(net_params['model'], net_params)
+    print("Model: \n", model)
     total_param = 0
     print("MODEL DETAILS:\n")
     print(model.parameters())
     for param in model.parameters():
         total_param += np.prod(list(param.data.size()))
 
-    print('Encoding Type/Total parameters:', 'None', total_param)
+    print('Total parameters:', total_param)
     return total_param
 
 
@@ -78,14 +82,14 @@ def view_model_param(net_params):
 def train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs):
     start0 = time.time()
     per_epoch_time = []
-
+    # print("In dim: ", net_params['in_dim'])
     DATASET_NAME = dataset.name
 
-    if net_params['full_graph']:
-        st = time.time()
-        print("[!] Adding full graph connectivity..")
-        dataset._make_full_graph()
-        print('Time taken to add full graph connectivity: ', time.time() - st)
+    # if net_params['full_graph']:
+    #     st = time.time()
+    #     print("[!] Adding full graph connectivity..")
+    #     dataset._make_full_graph()
+    #     print('Time taken to add full graph connectivity: ', time.time() - st)
 
     trainset, valset, testset = dataset.train, dataset.val, dataset.test
 
@@ -115,7 +119,7 @@ def train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs):
     print("Number of Classes: ", net_params['n_classes'])
     print(net_params)
 
-    model = GCNNet(net_params)
+    model = gnn_model(net_params['model'], net_params)
     model = model.to(device)
     print("Model parameter: ", model.parameters())
 
@@ -131,10 +135,12 @@ def train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs):
     # import train and evaluate functions
     from train.train_SBMs_node_classification import train_epoch, evaluate_network
 
+    print("Adding structural and postional features")
+    start_a = time.time()
     train_loader = DataLoader(trainset, batch_size=params['batch_size'], shuffle=True, collate_fn=dataset.collate)
     val_loader = DataLoader(valset, batch_size=params['batch_size'], shuffle=False, collate_fn=dataset.collate)
     test_loader = DataLoader(testset, batch_size=params['batch_size'], shuffle=False, collate_fn=dataset.collate)
-
+    print("Add in: ", time.time() -start_a)
     # At any point you can hit Ctrl + C to break out of training early.
     try:
         with tqdm(range(params['epochs'])) as t:
@@ -344,6 +350,8 @@ def main():
 
     net_params['in_dim'] = torch.unique(dataset.train[0][0].ndata['feat'], dim=0).size(
         0)  # node_dim (feat is an integer)
+    # net_params['in_dim'] = print(dataset.train[0][0].ndata['feat'])
+    print("In dim at main: ", net_params['in_dim'])
 
     net_params['n_classes'] = torch.unique(dataset.train[0][1], dim=0).size(0)
 

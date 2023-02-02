@@ -5,7 +5,7 @@
 
 from nets.gcn_net import GCNNet
 from nets.citations.Transformer import Transformer
-from nets.citations.STransformer import STransformer
+from nets.pattern.spe_transformer import STransformer
 from nets.SAN_NodeLPE import SAN_NodeLPE
 from nets.SAN_EdgeLPE import SAN_EdgeLPE
 from nets.graphsage import GraphSAGE

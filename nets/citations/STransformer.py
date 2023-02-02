@@ -96,6 +96,8 @@ class STransformer(nn.Module):
         
         # GraphTransformer Layers
         for conv in self.layers:
+            print(h.shape)
+            print(g.num_nodes())
             h = conv(g, h)
             
         # output

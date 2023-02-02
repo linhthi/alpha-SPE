@@ -24,9 +24,9 @@
 
     "net_params": {
         "model": "spe",
-        "full_graph": true,
+        "full_graph": false,
         "laplace_decomp": true,
-        "m": 20,
+        "m": 16,
 
         "alpha": 0.0,
         "k": 32,
@@ -43,7 +43,7 @@
         "GT_hidden_dim": 64,
         "GT_out_dim": 64,
         "GT_n_heads": 8, 
-        "spe_hidden_dim": 128,
+        "spe_hidden_dim": 32,
 
         "residual": true,
         "readout": "mean",
