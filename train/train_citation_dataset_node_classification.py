@@ -8,7 +8,7 @@ import torch.nn as nn
 import math
 import dgl
 
-from train.metrics import accuracy_SBM as accuracy
+from train.metrics import accuracy_CITATION_GRAPH as accuracy
 
 
 def train_epoch(model, optimizer, device, graph, mask):
