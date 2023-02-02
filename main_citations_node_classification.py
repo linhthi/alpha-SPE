@@ -32,10 +32,9 @@ class DotDict(dict):
 """
     IMPORTING CUSTOM MODULES/METHODS
 """
-from nets.gcn_net import GCNNet
 from nets.citations.Transformer import Transformer
 from data.data import load_data
-from nets.load_net import gnn_model 
+from nets.citations.load_net import gnn_model 
 
 """
     GPU Setup

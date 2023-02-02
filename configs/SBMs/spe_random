@@ -5,15 +5,15 @@
     },
 
     "model": "SPE",
-    "dataset": "cora",
+    "dataset": "pattern",
 
-    "out_dir": "out/citation/cora/full/1e-3",
+    "out_dir": "out/sbm/pattern/full/1e-4",
 
     "params": {
         "seed": 42,
-        "epochs": 100,
-        "batch_size": 64,
-        "init_lr": 0.001,
+        "epochs": 200,
+        "batch_size": 32,
+        "init_lr": 0.0001,
         "lr_reduce_factor": 0.5,
         "lr_schedule_patience": 60,
         "min_lr": 1e-4,
@@ -24,9 +24,9 @@
 
     "net_params": {
         "model": "spe",
-        "full_graph": true,
+        "full_graph": false,
         "laplace_decomp": true,
-        "m": 20,
+        "m": 16,
 
         "alpha": 0.0,
         "k": 32,
@@ -43,7 +43,7 @@
         "GT_hidden_dim": 64,
         "GT_out_dim": 64,
         "GT_n_heads": 8, 
-        "spe_hidden_dim": 128,
+        "spe_hidden_dim": 32,
 
         "residual": true,
         "readout": "mean",

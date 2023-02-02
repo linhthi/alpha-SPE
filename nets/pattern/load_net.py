@@ -3,14 +3,14 @@
     selected by the user
 """
 
-from nets.gcn_net import GCNNet
-from nets.citations.Transformer import Transformer
-from nets.citations.STransformer import STransformer
-from nets.SAN_NodeLPE import SAN_NodeLPE
-from nets.SAN_EdgeLPE import SAN_EdgeLPE
-from nets.graphsage import GraphSAGE
-from nets.gat import GAT
-from nets.mlp import MLP
+from nets.pattern.gcn_net import GCNNet
+from nets.pattern.Transformer import Transformer
+from nets.pattern.spe_transformer import STransformer
+from nets.pattern.SAN_NodeLPE import SAN_NodeLPE
+from nets.pattern.SAN_EdgeLPE import SAN_EdgeLPE
+from nets.pattern.graphsage import GraphSAGE
+from nets.pattern.gat import GAT
+from nets.pattern.mlp import MLP
 
 def NodeLPE(net_params):
     return SAN_NodeLPE(net_params)

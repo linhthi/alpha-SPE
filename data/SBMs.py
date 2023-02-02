@@ -88,6 +88,7 @@ class SBMsDatasetDGL(torch.utils.data.Dataset):
         self.train = load_SBMsDataSetDGL(data_dir, name, split='train')
         self.test = load_SBMsDataSetDGL(data_dir, name, split='test')
         self.val = load_SBMsDataSetDGL(data_dir, name, split='val')
+        print(self.train[0][0].ndata['feat'].shape)
         print("[I] Finished loading.")
         print("[I] Data load time: {:.4f}s".format(time.time() - start))
 
@@ -123,7 +124,9 @@ class SBMsDataset(torch.utils.data.Dataset):
             # Adding postional features: Eigen values and Eigen vectors
             FullEigVals, FullEigVecs = pf.laplace_decomp(graph, graph.num_nodes())
             graphs[idx].ndata['EigVals'] = torch.Tensor(FullEigVals)
-            graphs[idx].ndata['EigVecs'] = torch.Tensor(FullEigVecs[:, 16])
+            graphs[idx].ndata['EigVecs'] = torch.Tensor(FullEigVecs[:, :16])
+            # print(graphs[idx].ndata['EigVecs'].shape)
+            # print(graphs[idx].ndata['EigVecs'].shape)
         batched_graph = dgl.batch(graphs)
 
         return batched_graph, labels

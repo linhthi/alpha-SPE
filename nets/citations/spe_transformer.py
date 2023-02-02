@@ -1,4 +1,3 @@
-# Reference: https://github.com/DevinKreuzer/SAN/blob/main/nets/SBMs_node_classification/SAN.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -16,7 +15,7 @@ from layers.mlp import MLP
 from scipy.sparse.linalg import norm
 from scipy import sparse as sp
 
-class STransformer(nn.Module):
+class SPETransformer(nn.Module):
 
     def __init__(self, net_params):
         super().__init__()
@@ -74,13 +73,11 @@ class STransformer(nn.Module):
         EigVals, EigVecs = g.EigVals, g.EigVecs
         # mEigVecs = EigVecs[:, :self.m].to(self.device) # previous version
         m = self.m
-        # print(EigVals)
         k = len(EigVals)
         mEigVals = torch.Tensor(EigVals[:m])
         mEigVals = mEigVals.repeat(k, 1) 
         mEigVecs = EigVecs[:, :m]
         PE_raw = torch.cat([mEigVals, mEigVecs], dim=1).to(self.device)
-        # print(mEigVecs.shape, mEigVals.)
 
         h_se = g.ndata['SE']
         h_se = self.embedding_se(h_se)
@@ -118,32 +115,10 @@ class STransformer(nn.Module):
         
         # weighted cross-entropy for unbalanced classes
         criterion = nn.CrossEntropyLoss(weight=weight)
-        loss_a = criterion(pred, label)
+        loss = criterion(pred, label)
 
-        g = self.g
-        n = g.number_of_nodes()
-        A = g.adjacency_matrix(scipy_fmt="csr")
-        N = sp.diags(dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5, dtype=float)
-        L = sp.eye(n) - N * A * N
-        # Loss location encoding
-        p = g.ndata['SPE']
-        pT = torch.transpose(p, 1, 0)
-        loss_b_1 = torch.trace(torch.mm(torch.mm(pT, torch.Tensor(L.todense()).to(self.device)), p))
 
-        # Correct batch-graph wise loss_b_2 implementation; using a block diagonal matrix
-        # bg = dgl.unbatch(g)
-        # batch_size = len(bg)
-        # P = sp.block_diag(p)
-        # PTP_In = P.T * P - sp.eye(P)
-        # loss_b_2 = torch.tensor(norm(PTP_In, 'fro')**2).float().to(self.device)
-
-        # loss_b = ( loss_b_1 + 100 * loss_b_2 ) / ( self.spe_hidden_dim * n) 
-        loss_b = loss_b_1
-
-        # /del bg, P, PTP_In, loss_b_1, loss_b_2
-        del loss_b_1
-
-        return loss_a + 0.01*loss_b
+        return loss
 
 
 
