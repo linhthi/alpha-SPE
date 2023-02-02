@@ -1,0 +1,55 @@
+{
+    "gpu": {
+        "use": false,
+        "id": 0
+    },
+
+    "model": "SPE",
+    "dataset": "cora",
+
+    "out_dir": "out/citation/cora/full/1e-3",
+
+    "params": {
+        "seed": 42,
+        "epochs": 100,
+        "batch_size": 64,
+        "init_lr": 0.001,
+        "lr_reduce_factor": 0.5,
+        "lr_schedule_patience": 60,
+        "min_lr": 1e-4,
+        "weight_decay": 5e-4,
+        "print_epoch_interval": 1,
+        "max_time": 24
+    },
+
+    "net_params": {
+        "model": "spe",
+        "full_graph": true,
+        "laplace_decomp": true,
+        "m": 20,
+
+        "alpha": 0.0,
+        "k": 32,
+
+        "n_layers": 3,
+        "hidden_dim": 32,
+        "out_dim": 32,
+
+        "LSE_layers": 1,
+        "LSE_dim": 32,
+        "LSE_n_heads": 4,
+
+        "GT_layers": 4,
+        "GT_hidden_dim": 64,
+        "GT_out_dim": 64,
+        "GT_n_heads": 8, 
+        "spe_hidden_dim": 128,
+
+        "residual": true,
+        "readout": "mean",
+        "in_feat_dropout": 0.7,
+        "dropout": 0.7,
+        "layer_norm": true,
+        "batch_norm": true
+    }
+}
