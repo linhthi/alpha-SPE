@@ -27,7 +27,8 @@
         "full_graph": true,
         "laplace_decomp": true,
         "m": 20,
-
+        
+        "learn_alpha": false,
         "alpha": 0.0,
         "k": 32,
 

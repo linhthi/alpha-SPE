@@ -25,7 +25,10 @@ class STransformer(nn.Module):
         in_dim_node = net_params['in_dim'] # node_dim (feat is an integer)
         self.n_classes = net_params['n_classes']
         
-        self.alpha = net_params['alpha']
+        self.learn_alpha = net_params['learn_alpha']
+        
+        if not net_params['learn_alpha']:
+            self.alpha = net_params['alpha']
         
         GT_layers = net_params['GT_layers']
         GT_hidden_dim = net_params['GT_hidden_dim']
@@ -59,6 +62,10 @@ class STransformer(nn.Module):
         self.embedding_se = MLP(in_dim=k, hidden_dim=hidden_dim, out_dim=spe_hidden_dim, n_layers=4, dropout=dropout)
         self.embedding_pe = MLP(in_dim=self.m*2, hidden_dim=hidden_dim, out_dim=spe_hidden_dim, n_layers=4, dropout=dropout)
 
+        if self.learn_alpha:
+            #self.w_alpha = nn.Conv1d(2, 1, kernel_size=1, bias=False)
+            self.w_alpha = nn.Parameter(torch.rand(1))
+
         encoder_layer = nn.TransformerEncoderLayer(d_model=LSE_dim, nhead=LSE_n_heads)
         self.SE_Transformer = nn.TransformerEncoder(encoder_layer, num_layers=LSE_layers)
         self.layers = nn.ModuleList([ GraphTransformerLayer(GT_hidden_dim, GT_hidden_dim, GT_n_heads, dropout, self.layer_norm, self.batch_norm, self.residual) for _ in range(GT_layers-1) ])
@@ -86,7 +93,19 @@ class STransformer(nn.Module):
         h_se = self.embedding_se(h_se)
         h_pe = PE_raw
         h_pe = self.embedding_pe(h_pe)
-        h_spe = (1-self.alpha)*h_pe + self.alpha*h_se
+        if not self.learn_alpha:
+            h_spe = (1-self.alpha)*h_pe + self.alpha*h_se
+        else:
+            #h_se1 = torch.unsqueeze(h_se, 1)
+            #h_pe1 = torch.unsqueeze(h_pe, 1)
+
+            #h_tmp = torch.cat([h_se1, h_pe1], dim=1)
+            #h_tmp = self.w_alpha(h_tmp)
+
+            #h_spe = torch.squeeze(h_tmp, 1)
+            w = self.w_alpha
+            h_spe = w*h_se + (1 - w)*h_pe
+
         g.ndata['SPE'] = h_spe
 
         h = self.embedding_h(h)
