@@ -4,7 +4,7 @@
 from data.SBMs import SBMsDataset
 from dgl.data import CoraGraphDataset, CiteseerGraphDataset, RedditDataset, PubmedGraphDataset
 from data.citation_data import CitationDataset
-from data.superpixels import SuperPixDataset
+from data.superpixels import SuperPixDataset, SuperPixDatasetDGL
 
 def load_data(dataset):
     """
@@ -14,7 +14,7 @@ def load_data(dataset):
     """
     # handling for MNIST or CIFAR Superpixels
     if dataset == 'MNIST' or dataset == 'CIFAR10':
-        return SuperPixDataset(dataset)
+        return SuperPixDatasetDGL(dataset)
 
     # handling for SBM datasets
     SBM_DATASETS = ['SBM_CLUSTER', 'SBM_PATTERN']
