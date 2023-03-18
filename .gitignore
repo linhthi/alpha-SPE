@@ -10,3 +10,5 @@
 /.idea/
 /.vscode/
 *.pyc
+*.pkl
+*.zip

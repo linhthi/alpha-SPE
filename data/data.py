@@ -14,7 +14,7 @@ def load_data(dataset):
     """
     # handling for MNIST or CIFAR Superpixels
     if dataset == 'MNIST' or dataset == 'CIFAR10':
-        return SuperPixDatasetDGL(dataset)
+        return SuperPixDataset(dataset)
 
     # handling for SBM datasets
     SBM_DATASETS = ['SBM_CLUSTER', 'SBM_PATTERN']
