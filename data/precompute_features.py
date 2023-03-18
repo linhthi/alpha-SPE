@@ -77,7 +77,7 @@ def add_edge_laplace_feats(g):
     return g
 
 
-def add_structural_feats(g, k=3, k0=32):
+def add_structural_feats(g, k=3, k0=16):
     """
     Add structural features using k_hop extractor
     :param g:

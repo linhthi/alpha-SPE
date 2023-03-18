@@ -54,7 +54,7 @@ class SPE_TransformerNet(nn.Module):
         
         self.embedding_h = nn.Linear(in_dim_node, GT_hidden_dim-spe_hidden_dim)
         self.embedding_se = MLP(in_dim=k, hidden_dim=hidden_dim, out_dim=spe_hidden_dim, n_layers=4, dropout=dropout)
-        self.embedding_pe = MLP(in_dim=self.m, hidden_dim=hidden_dim, out_dim=spe_hidden_dim, n_layers=4, dropout=dropout)
+        self.embedding_pe = MLP(in_dim=self.m*2, hidden_dim=hidden_dim, out_dim=spe_hidden_dim, n_layers=4, dropout=dropout)
 
         encoder_layer = nn.TransformerEncoderLayer(d_model=LSE_dim, nhead=LSE_n_heads)
         self.SE_Transformer = nn.TransformerEncoder(encoder_layer, num_layers=LSE_layers)
@@ -68,13 +68,16 @@ class SPE_TransformerNet(nn.Module):
     def forward(self, g, h, e):
         
         EigVals, EigVecs = g.ndata['EigVals'], g.ndata['EigVecs']
-        # mEigVals = EigVals[:self.m]
-        mEigVecs = EigVecs[:, :self.m].to(self.device)
-        # print(mEigVecs.shape, mEigVals.)
+        k = len(EigVals)
+        mEigVals = EigVals[:self.m]
+        mEigVals = mEigVals.repeat(k, 1)
+        # mEigVecs = EigVecs[:, :self.m].to(self.device)
+        PE_raw = torch.cat([mEigVals, EigVecs], dim=1).to(self.device)
+        print(EigVecs.shape, mEigVals.shape)
 
         h_se = g.ndata['SE']
         h_se = self.embedding_se(h_se)
-        h_pe = mEigVecs
+        h_pe = PE_raw
         h_pe = self.embedding_pe(h_pe)
         h_spe = (1-self.alpha)*h_pe + self.alpha*h_se
 

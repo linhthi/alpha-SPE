@@ -14,7 +14,7 @@
         "seed": 42,
         "epochs": 1000,
         "batch_size": 256,
-        "init_lr": 0.001,
+        "init_lr": 0.005,
         "lr_reduce_factor": 0.5,
         "lr_schedule_patience": 60,
         "min_lr": 1e-4,
@@ -27,10 +27,10 @@
         "model": "spe",
         "full_graph": true,
         "laplace_decomp": true,
-        "m": 20,
+        "m": 32,
 
         "alpha": 0.0,
-        "k": 32,
+        "k": 16,
 
         "n_layers": 3,
         "hidden_dim": 32,
@@ -41,15 +41,15 @@
         "LSE_n_heads": 4,
 
         "GT_layers": 4,
-        "GT_hidden_dim": 256,
-        "GT_out_dim": 256,
+        "GT_hidden_dim": 64,
+        "GT_out_dim": 64,
         "GT_n_heads": 8, 
-        "spe_hidden_dim": 128,
+        "spe_hidden_dim": 32,
 
         "residual": true,
         "readout": "mean",
-        "in_feat_dropout": 0.7,
-        "dropout": 0.7,
+        "in_feat_dropout": 0.6,
+        "dropout": 0.6,
         "layer_norm": true,
         "batch_norm": true
     }
