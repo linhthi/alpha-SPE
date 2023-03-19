@@ -3,7 +3,7 @@
     selected by the user
 """
  
-from nets.lrgb_graph_regression.spe_transformer import SPE_TransformerNet
+from nets.lrgb_graph_classification.spe_transformer import SPE_TransformerNet
 
 
 def SPE(net_params):

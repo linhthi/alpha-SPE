@@ -40,8 +40,8 @@ class DotDict(dict):
 """
     IMPORTING CUSTOM MODULES/METHODS
 """
-from nets.molecules_graph_regression.load_net import gnn_model # import all GNNS
-from data.data import LoadData # import dataset
+from nets.lrgb_graph_classification.load_net import gnn_model # import all GNNS
+from data.data import load_data # import dataset
 
 
 
@@ -306,7 +306,7 @@ def main():
         DATASET_NAME = args.dataset
     else:
         DATASET_NAME = config['dataset']
-    dataset = LoadData(DATASET_NAME)
+    dataset = load_data(DATASET_NAME)
     if args.out_dir is not None:
         out_dir = args.out_dir
     else:
