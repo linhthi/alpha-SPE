@@ -5,6 +5,7 @@ from data.SBMs import SBMsDataset
 from dgl.data import CoraGraphDataset, CiteseerGraphDataset, RedditDataset, PubmedGraphDataset
 from data.citation_data import CitationDataset
 from data.superpixels import SuperPixDataset, SuperPixDatasetDGL
+from data.lrgb_peptides import LRGBPeptidesDataset
 
 def load_data(dataset):
     """
@@ -26,6 +27,9 @@ def load_data(dataset):
 
     if dataset == 'REDDIT':
         return RedditDataset()
+
+    if dataset == 'LRGB':
+        return LRGBPeptidesDataset()
     
 
 
