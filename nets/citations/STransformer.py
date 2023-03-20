@@ -90,6 +90,7 @@ class STransformer(nn.Module):
         # print(mEigVecs.shape, mEigVals.)
 
         h_se = g.ndata['SE']
+        print(h_se.get_device())
         h_se = self.embedding_se(h_se)
         h_pe = PE_raw
         h_pe = self.embedding_pe(h_pe)

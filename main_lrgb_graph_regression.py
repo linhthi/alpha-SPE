@@ -93,7 +93,7 @@ def train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs):
     t0 = time.time()
     per_epoch_time = []
         
-    DATASET_NAME = dataset.name
+    DATASET_NAME = 'LRGB'
     
     if MODEL_NAME in ['GCN', 'GAT']:
         if net_params['self_loop']:
@@ -243,11 +243,6 @@ def train_val_pipeline(MODEL_NAME, dataset, params, net_params, dirs):
 
 
 def main():    
-    """
-        USER CONTROLS
-    """
-    
-    
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', help="Please give a config.json file with training/model/data/param details")
     parser.add_argument('--gpu_id', help="Please give a value for gpu id")
@@ -286,8 +281,6 @@ def main():
     parser.add_argument('--cat', help="Please give a value for cat")
     parser.add_argument('--self_loop', help="Please give a value for self_loop")
     parser.add_argument('--max_time', help="Please give a value for max_time")
-    parser.add_argument('--pos_enc_dim', help="Please give a value for pos_enc_dim")
-    parser.add_argument('--pos_enc', help="Please give a value for pos_enc")
     args = parser.parse_args()
     with open(args.config) as f:
         config = json.load(f)
@@ -382,15 +375,6 @@ def main():
         net_params['cat'] = True if args.cat=='True' else False
     if args.self_loop is not None:
         net_params['self_loop'] = True if args.self_loop=='True' else False
-    if args.pos_enc is not None:
-        net_params['pos_enc'] = True if args.pos_enc=='True' else False
-    if args.pos_enc_dim is not None:
-        net_params['pos_enc_dim'] = int(args.pos_enc_dim)
-        
-    
-    # ZINC
-    net_params['num_atom_type'] = dataset.num_atom_type
-    net_params['num_bond_type'] = dataset.num_bond_type
 
     
     if MODEL_NAME == 'DiffPool':
@@ -427,6 +411,7 @@ def main():
     
     
 main()    
+
 
 
 

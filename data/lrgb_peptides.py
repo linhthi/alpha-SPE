@@ -1,4 +1,5 @@
 import pandas
+import tqdm
 import numpy as np
 import pickle
 import os
@@ -9,13 +10,15 @@ from dgl.data import DGLDataset
 import ogb
 from ogb import utils as ogb_utils
 import data.precompute_features as pf
+import pandas as pd
+import torch.nn.functional as F
 
-class LRGBDGLDataset(torch.utils.data.Dataset):
+class LRGBDGLDataset(DGLDataset):
     def __init__(self, df, target_names):
         self.df = df
         self.target_names = target_names
         super().__init__(name="lrgb")
-        self.process()
+        # self.process()
 
     def process(self):
 
@@ -28,7 +31,7 @@ class LRGBDGLDataset(torch.utils.data.Dataset):
 
         # For each graph ID...
         #for graph_id in range(len(smiles)):
-        for graph_id in range(len(smiles_list)):
+        for graph_id in tqdm.tqdm(range(len(smiles_list))):
             smiles = smiles_list[graph_id]
             y = df.iloc[graph_id][target_names]
 
@@ -42,12 +45,34 @@ class LRGBDGLDataset(torch.utils.data.Dataset):
             # Create a graph and add it to the list of graphs and labels.
             g = dgl.graph((src, dst), num_nodes=num_nodes)
             g.ndata["feat"] = torch.FloatTensor(graph['node_feat'])
-            g.edata["weight"] = torch.FloatTensor(graph['edge_feat'])
-            self.graphs.append(g)
-            self.labels.append(y)
+            g.edata["feat"] = torch.FloatTensor(graph['edge_feat'])
+            g.ndata['SE'] = pf.add_structural_feats(g)
+            # Adding postional features: Eigen values and Eigen vectors
+            FullEigVals, FullEigVecs = pf.laplace_decomp(g, num_nodes)
 
-        # Convert the label list to tensor for saving.
-        self.labels = torch.FloatTensor(self.labels)
+            sum_abs = np.sum(np.abs(FullEigVecs[:, :16]), axis=1)
+
+            FullEigVecs[sum_abs < 1e-6, :] += 1e-6
+            
+            print(graph_id, FullEigVecs.shape, sum_abs.shape)
+            print(len(FullEigVecs[sum_abs<1e-5]))
+
+            FullEigVecs = torch.FloatTensor(FullEigVecs)
+            FullEigVecs = F.normalize(FullEigVecs, p=2, dim=1, eps=1e-12, out=None)
+            after_nomal = FullEigVecs.numpy()
+
+            sum_abs = np.sum(np.abs(after_nomal[:, :16]), axis=1)
+            print(graph_id, sum_abs.shape)
+            print('After normal: ', len(after_nomal[sum_abs<1e-5]))
+
+            g.ndata['EigVals'] = torch.FloatTensor(FullEigVals)
+            g.ndata['EigVecs'] = torch.FloatTensor(FullEigVecs[:, :16])
+
+            self.graphs.append(g)
+            self.labels.append(torch.FloatTensor(y))
+
+        # Convert the label list to tensor for saving
+        # self.labels = torch.FloatTensor(self.labels)
 
     def __getitem__(self, i):
         return self.graphs[i], self.labels[i]
@@ -72,15 +97,15 @@ class LRGBDataset(torch.utils.data.Dataset):
                     'Inertia_valence_c', 'length_a', 'length_b', 'length_c',
                     'Spherocity', 'Plane_best_fit']
         
-        df.loc[:, target_names] = df.loc[:, target_names].apply(
-            lambda x: (x - x.mean()) / x.std(), axis=0)
+        #df.loc[:, target_names] = df.loc[:, target_names].apply(
+        #    lambda x: (x - x.mean()) / x.std(), axis=0)
     
         with open(mask_file, "rb") as f:
             mask = pickle.load(f)
 
-        df_train = df.iloc[mask["train"]].copy().reset_index(drop=True)
-        df_val = df.iloc[mask["val"]].copy().reset_index(drop=True)
-        df_test = df.iloc[mask["test"]].copy().reset_index(drop=True)
+        df_train = df.iloc[mask["train"][:32]].copy().reset_index(drop=True)
+        df_val = df.iloc[mask["val"][:100]].copy().reset_index(drop=True)
+        df_test = df.iloc[mask["test"][:32]].copy().reset_index(drop=True)
         print("Got train data: ", df_train.shape)
         print("Got val data: ", df_val.shape)
         print("Got test data: ", df_test.shape)
@@ -91,16 +116,21 @@ class LRGBDataset(torch.utils.data.Dataset):
 
     def collate(self, samples):
         graphs, labels = map(list, zip(*samples))
-        labels = torch.cat(labels).long()
-        for idx, graph in enumerate(graphs):
-            graphs[idx].ndata['feat'] = graph.ndata['feat'].float()
-            graphs[idx].edata['feat'] = graph.edata['feat'].float()
+        #labels = torch.cat(labels).long()
+        labels = torch.cat(labels)
+        #print(labels.shape)
+        #for idx, graph in enumerate(graphs):
+        #    graphs[idx].ndata['feat'] = graph.ndata['feat'].float()
+        #    graphs[idx].edata['feat'] = graph.edata['feat'].float()
             # Adding structural features
-            graphs[idx].ndata['SE'] = pf.add_structural_feats(graph)
+        #    graphs[idx].ndata['SE'] = pf.add_structural_feats(graph)
             # Adding postional features: Eigen values and Eigen vectors
-            FullEigVals, FullEigVecs = pf.laplace_decomp(graph, graph.num_nodes())
-            graphs[idx].ndata['EigVals'] = torch.Tensor(FullEigVals)
-            graphs[idx].ndata['EigVecs'] = torch.Tensor(FullEigVecs[:, :16])
+        #    FullEigVals, FullEigVecs = pf.laplace_decomp(graph, graph.num_nodes())
+        #    if FullEigVecs.shape[1] < 16:
+        #        FullEigVecs = np.resize(FullEigVecs, (FullEigVecs.shape[0], 16))
+
+        #    graphs[idx].ndata['EigVals'] = torch.Tensor(FullEigVals)
+        #    graphs[idx].ndata['EigVecs'] = torch.Tensor(FullEigVecs[:, :16])
         batched_graph = dgl.batch(graphs)
 
-        return batched_graph, labels    
+        return batched_graph, labels.reshape((-1, 11)) 

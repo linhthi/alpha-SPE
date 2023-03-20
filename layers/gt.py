@@ -73,7 +73,7 @@ class MultiHeadAttentionLayer(nn.Module):
         
         self.propagate_attention(g)
         
-        head_out = g.ndata['wV']/g.ndata['z']
+        head_out = g.ndata['wV']/(g.ndata['z'] + 1e-6)
         
         return head_out
     

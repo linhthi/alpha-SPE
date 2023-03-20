@@ -6,6 +6,7 @@
 
     "model": "SPE",
     "dataset": "cora",
+    "use_spe": true,
 
     "out_dir": "out/citation/cora/full/1e-3",
 

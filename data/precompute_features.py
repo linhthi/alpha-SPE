@@ -24,19 +24,22 @@ def laplace_decomp(g, max_freqs):
     # print(EigVecs)
 
     # Normalize and pad EigenVectors
-    EigVecs = torch.from_numpy(EigVecs).float()
-    EigVecs = F.normalize(EigVecs, p=2, dim=1, eps=1e-12, out=None)
     
     EigVals = np.sort(np.abs(np.real(EigVals)))
 
     if n < max_freqs:
-        EigVals = np.pad(EigVals, (0, max_freqs - n), 'constant', constant_values=(0))
-        EigVecs = np.pad(EigVecs, (0, max_freqs - n), 'constant', constant_values=(0))
+        EigVals = np.pad(EigVals, (0, max_freqs - n), 'constant', constant_values=(1))
+        EigVecs = np.pad(EigVecs, (0, max_freqs - n), 'constant', constant_values=(1))
 
+    
     EigVals, EigVecs = EigVals[: max_freqs], EigVecs[:, :max_freqs]
 
-    return EigVals, EigVecs
+    if EigVecs.shape[1] < 16:
+        EigVecs = np.resize(EigVecs, (EigVecs.shape[0], 16))
+        #np.append(EigVecs, np.ones((EigVecs.shape[0],16 - EigVecs.shape[1])),axis=1)
 
+
+    return EigVals, EigVecs
 
 def make_full_graph(g):
     full_g = dgl.from_networkx(nx.complete_graph(g.number_of_nodes()))
@@ -80,33 +83,37 @@ def add_edge_laplace_feats(g):
     return g
 
 
-def add_structural_feats(g):
+def add_structural_feats(g, k=3, k0=16):
     """
     Add structural features using k_hop extractor
     :param g:
     :return:
     """
     # Add local structural to encoding (SE)
-    sampler = dgl.dataloading.ShaDowKHopSampler([10, 5, 5]) # using 3 hop
-    dataloader = dgl.dataloading.DataLoader(g, torch.arange(g.num_nodes()), sampler, 
-                                    batch_size=1, shuffle=False, drop_last=False)
-    # subgraphs = []
-    # for node in g.nodes():
-    #     subgraphs.append(dgl.khop_subgraph(g, node, 2))
-    SE = []
-    for input_nodes, output_nodes, subgraph in dataloader:
-        # extract eigen val and vector from subgraph and to contruct the structure of each node
+    # sampler = dgl.dataloading.ShaDowKHopSampler([10, 5, 5]) # using 3 hop
+    # dataloader = dgl.dataloading.DataLoader(g, torch.arange(g.num_nodes()), sampler, 
+    #                                 batch_size=1, shuffle=False, drop_last=False)
+    subgraphs = []
+    for node in g.nodes():
+        sg, inverse_indices = dgl.khop_out_subgraph(g, node, k)
+        subgraphs.append(sg)
+    # SE = []
+    # for input_nodes, output_nodes, subgraph in dataloader:
+    #     # extract eigen val and vector from subgraph and to contruct the structure of each node
 
-        EigVals, EigVecs = laplace_decomp(subgraph, 32)
-        SE.append(EigVals)
-    # eigenvalues = []
-    # for subgraph in subgraphs:
-    #     adj = subgraph.adjacency_matrix().to_dense()
-    #     eigenvalues.append(np.linalg.eigvals(adj.A))
-    # SE = eigenvalues
+    #     EigVals, EigVecs = laplace_decomp(subgraph, 32)
+    #     SE.append(EigVals)
+    eigenvalues = []
+    for subgraph in subgraphs:
+        eigvalues, _ = laplace_decomp(subgraph, k0)
+        eigenvalues.append(eigvalues)
+    SE = eigenvalues
     SE = np.asarray(SE)
-    SE = torch.Tensor(SE)
-    # print(SE)
+    if np.isnan(SE.any()):
+        print('SE')
+
+    SE = torch.FloatTensor(SE)
     return SE
+
 
 
