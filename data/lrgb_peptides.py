@@ -14,9 +14,11 @@ import pandas as pd
 import torch.nn.functional as F
 
 class LRGBDGLDataset(DGLDataset):
-    def __init__(self, df, target_names):
+    def __init__(self, df, target_names, dataset='train', preload=False):
         self.df = df
         self.target_names = target_names
+        self.preload = preload
+        self.dataset = dataset
         super().__init__(name="lrgb")
         # self.process()
 
@@ -31,6 +33,13 @@ class LRGBDGLDataset(DGLDataset):
 
         # For each graph ID...
         #for graph_id in range(len(smiles)):
+        if self.preload:
+            tmp_file = "%s_precompute.pkl" % self.dataset
+            with open(tmp_file, "rb") as f:
+                output = pickle.load(f)
+        else:
+            output = {}
+
         for graph_id in tqdm.tqdm(range(len(smiles_list))):
             smiles = smiles_list[graph_id]
             y = df.iloc[graph_id][target_names]
@@ -44,35 +53,55 @@ class LRGBDGLDataset(DGLDataset):
             num_nodes = graph['num_nodes']
             # Create a graph and add it to the list of graphs and labels.
             g = dgl.graph((src, dst), num_nodes=num_nodes)
+
             g.ndata["feat"] = torch.FloatTensor(graph['node_feat'])
             g.edata["feat"] = torch.FloatTensor(graph['edge_feat'])
-            g.ndata['SE'] = pf.add_structural_feats(g)
-            # Adding postional features: Eigen values and Eigen vectors
-            FullEigVals, FullEigVecs = pf.laplace_decomp(g, num_nodes)
 
-            sum_abs = np.sum(np.abs(FullEigVecs[:, :16]), axis=1)
+            if self.preload:
+                se = np.array(output["%s_SE" % graph_id])
+                eigvals = np.array(output["%s_EigVals" % graph_id])
+                eigvecs = np.array(output["%s_EigVecs" % graph_id])
 
-            FullEigVecs[sum_abs < 1e-6, :] += 1e-6
+                g.ndata['SE'] = torch.FloatTensor(se)
+                g.ndata['EigVals'] = torch.FloatTensor(eigvals)
+                g.ndata['EigVecs'] = torch.FloatTensor(eigvecs)
+            else:
+                g.ndata['SE'] = pf.add_structural_feats(g, 3, 32)
+                # Adding postional features: Eigen values and Eigen vectors
+                FullEigVals, FullEigVecs = pf.laplace_decomp(g, num_nodes)
+
+                sum_abs = np.sum(np.abs(FullEigVecs[:, :32]), axis=1)
+
+                # FullEigVecs[sum_abs < 1e-6, :] += 1e-6
             
-            print(graph_id, FullEigVecs.shape, sum_abs.shape)
-            print(len(FullEigVecs[sum_abs<1e-5]))
+                #print(graph_id, FullEigVecs.shape, sum_abs.shape)
+                #print(len(FullEigVecs[sum_abs<1e-5]))
 
-            FullEigVecs = torch.FloatTensor(FullEigVecs)
-            FullEigVecs = F.normalize(FullEigVecs, p=2, dim=1, eps=1e-12, out=None)
-            after_nomal = FullEigVecs.numpy()
+                FullEigVecs = torch.FloatTensor(FullEigVecs)
+                FullEigVecs = F.normalize(FullEigVecs, p=2, dim=1, eps=1e-12, out=None)
+                after_nomal = FullEigVecs.numpy()
 
-            sum_abs = np.sum(np.abs(after_nomal[:, :16]), axis=1)
-            print(graph_id, sum_abs.shape)
-            print('After normal: ', len(after_nomal[sum_abs<1e-5]))
+                sum_abs = np.sum(np.abs(after_nomal[:, :32]), axis=1)
+                #print(graph_id, sum_abs.shape)
+                #print('After normal: ', len(after_nomal[sum_abs<1e-5]))
 
-            g.ndata['EigVals'] = torch.FloatTensor(FullEigVals)
-            g.ndata['EigVecs'] = torch.FloatTensor(FullEigVecs[:, :16])
+                g.ndata['EigVals'] = torch.FloatTensor(FullEigVals)
+                g.ndata['EigVecs'] = torch.FloatTensor(FullEigVecs[:, :32])
+
+                output["%s_SE" % graph_id] = g.ndata['SE'].numpy().tolist()
+                output["%s_EigVals" % graph_id] = g.ndata['EigVals'].numpy().tolist()
+                output["%s_EigVecs" % graph_id] = g.ndata['EigVecs'].numpy().tolist()
+
 
             self.graphs.append(g)
             self.labels.append(torch.FloatTensor(y))
 
         # Convert the label list to tensor for saving
         # self.labels = torch.FloatTensor(self.labels)
+
+        if not self.preload:
+            with open("%s_precompute.pkl" % self.dataset, "wb") as f:
+                pickle.dump(output, f)
 
     def __getitem__(self, i):
         return self.graphs[i], self.labels[i]
@@ -97,22 +126,25 @@ class LRGBDataset(torch.utils.data.Dataset):
                     'Inertia_valence_c', 'length_a', 'length_b', 'length_c',
                     'Spherocity', 'Plane_best_fit']
         
-        #df.loc[:, target_names] = df.loc[:, target_names].apply(
-        #    lambda x: (x - x.mean()) / x.std(), axis=0)
+        df.loc[:, target_names] = df.loc[:, target_names].apply(
+            lambda x: (x - x.mean()) / x.std(), axis=0)
     
         with open(mask_file, "rb") as f:
             mask = pickle.load(f)
-
-        df_train = df.iloc[mask["train"][:32]].copy().reset_index(drop=True)
-        df_val = df.iloc[mask["val"][:100]].copy().reset_index(drop=True)
-        df_test = df.iloc[mask["test"][:32]].copy().reset_index(drop=True)
+        
+        df_train = df.iloc[mask["train"]].copy().reset_index(drop=True)
+        df_val = df.iloc[mask["val"]].copy().reset_index(drop=True)
+        df_test = df.iloc[mask["test"]].copy().reset_index(drop=True)
+        # df_train = df.iloc[mask["train"][:32]].copy().reset_index(drop=True)
+        # df_val = df.iloc[mask["val"][:100]].copy().reset_index(drop=True)
+        # df_test = df.iloc[mask["test"][:32]].copy().reset_index(drop=True)
         print("Got train data: ", df_train.shape)
         print("Got val data: ", df_val.shape)
         print("Got test data: ", df_test.shape)
 
-        self.train = LRGBDGLDataset(df_train, target_names)
-        self.val = LRGBDGLDataset(df_val, target_names)
-        self.test = LRGBDGLDataset(df_test, target_names)
+        self.train = LRGBDGLDataset(df_train, target_names, 'train', True)
+        self.val = LRGBDGLDataset(df_val, target_names, 'val', True)
+        self.test = LRGBDGLDataset(df_test, target_names, 'test', True)
 
     def collate(self, samples):
         graphs, labels = map(list, zip(*samples))

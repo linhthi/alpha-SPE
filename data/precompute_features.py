@@ -34,8 +34,8 @@ def laplace_decomp(g, max_freqs):
     
     EigVals, EigVecs = EigVals[: max_freqs], EigVecs[:, :max_freqs]
 
-    if EigVecs.shape[1] < 16:
-        EigVecs = np.resize(EigVecs, (EigVecs.shape[0], 16))
+    if EigVecs.shape[1] < 32:
+        EigVecs = np.resize(EigVecs, (EigVecs.shape[0], 32))
         #np.append(EigVecs, np.ones((EigVecs.shape[0],16 - EigVecs.shape[1])),axis=1)
 
 
