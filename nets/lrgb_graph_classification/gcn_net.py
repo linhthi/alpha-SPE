@@ -23,7 +23,7 @@ class GCNNet(nn.Module):
         self.layers.append(dglnn.GraphConv(hidden_dim, out_dim))
         self.dropout = nn.Dropout(0.5)
 
-    def forward(self, g, features, e):
+    def for ward(self, g, features, e):
         h = features
         for i, layer in enumerate(self.layers):
             if i != 0:

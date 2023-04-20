@@ -57,6 +57,8 @@ class LRGBDGLDataset(DGLDataset):
             g.ndata["feat"] = torch.FloatTensor(graph['node_feat'])
             g.edata["feat"] = torch.FloatTensor(graph['edge_feat'])
 
+            g = dgl.add_self_loop(g)
+
             if self.preload:
                 se = np.array(output["%s_SE" % graph_id])
                 eigvals = np.array(output["%s_EigVals" % graph_id])
@@ -91,7 +93,6 @@ class LRGBDGLDataset(DGLDataset):
                 output["%s_SE" % graph_id] = g.ndata['SE'].numpy().tolist()
                 output["%s_EigVals" % graph_id] = g.ndata['EigVals'].numpy().tolist()
                 output["%s_EigVecs" % graph_id] = g.ndata['EigVecs'].numpy().tolist()
-
 
             self.graphs.append(g)
             self.labels.append(torch.FloatTensor(y))
@@ -165,4 +166,10 @@ class LRGBDataset(torch.utils.data.Dataset):
         #    graphs[idx].ndata['EigVecs'] = torch.Tensor(FullEigVecs[:, :16])
         batched_graph = dgl.batch(graphs)
 
-        return batched_graph, labels.reshape((-1, 11)) 
+        return batched_graph, labels.reshape((-1, 11))
+
+    def _add_self_loops(self):
+        # Add all self loops for training and validation and test
+        for graph in self.train.graphs:
+
+            
