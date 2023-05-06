@@ -21,7 +21,7 @@ class SAN_NodeLPE(nn.Module):
         super().__init__()
 
         in_dim_node = net_params['in_dim'] # node_dim (feat is an integer)
-        self.n_classes = net_params['n_classes']
+        # self.n_classes = net_params['n_classes']
         
         full_graph = net_params['full_graph']
         gamma = net_params['gamma']
@@ -64,7 +64,7 @@ class SAN_NodeLPE(nn.Module):
         self.layers.append(GraphTransformerLayer(GT_hidden_dim, GT_out_dim, GT_n_heads, dropout, self.layer_norm, self.batch_norm, self.residual))
 
 
-        self.MLP_layer = MLPReadout(GT_out_dim, self.n_classes)
+        self.MLP_layer = MLPReadout(GT_out_dim, 11)
 
 
     def forward(self, g, h, e=None):
@@ -106,7 +106,9 @@ class SAN_NodeLPE(nn.Module):
         # GraphTransformer Layers
         for conv in self.layers:
             h = conv(g, h)
-            
+        
+        g.ndata['h'] = h
+        
         # output
         if self.readout == 'sum':
             h_out = dgl.sum_nodes(g, 'h')
