@@ -12,3 +12,5 @@
 *.pyc
 *.pkl
 *.zip
+data/peptide_structure_normalized_dataset.csv
+data/splits_random_stratified_peptide.pickle

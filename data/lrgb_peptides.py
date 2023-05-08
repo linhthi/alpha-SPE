@@ -115,8 +115,8 @@ class LRGBDataset(torch.utils.data.Dataset):
         """
             Loading
         """
-    def __init__(self, csv_file="/home/linhht/peptide_structure_normalized_dataset.csv",
-                   mask_file="/home/linhht/splits_random_stratified_peptide.pickle"):
+    def __init__(self, csv_file="data/peptide_structure_normalized_dataset.csv",
+                   mask_file="data/splits_random_stratified_peptide.pickle"):
         print("Read raw csv data from: ", csv_file)
         df = pd.read_csv(csv_file)
         print("Got: ", df.shape)
