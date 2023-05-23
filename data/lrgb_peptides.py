@@ -168,8 +168,8 @@ class LRGBDataset(torch.utils.data.Dataset):
 
         return batched_graph, labels.reshape((-1, 11))
 
-    def _add_self_loops(self):
-        # Add all self loops for training and validation and test
-        for graph in self.train.graphs:
+    # def _add_self_loops(self):
+    #     # Add all self loops for training and validation and test
+    #     for graph in self.train.graphs:
 
             
