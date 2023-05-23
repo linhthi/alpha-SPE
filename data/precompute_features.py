@@ -8,37 +8,59 @@ import dgl
 
 
 def laplace_decomp(g, max_freqs):
+    """
+    Compute the eigendecomposition of the normalized laplacian of a graph
+    :param g: DGL graph
+    :param max_freqs: Number of eigenvectors to compute
+    :return: Eigenvalues and Eigenvectors
+    """
+    # Compute the normalized laplacian
     n = g.num_nodes()
-    #A = g.adj()
-    # print((A))
-    #N = torch.Tensor(dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5).diag()
-    # print((N))
-    #L = torch.eye(g.num_nodes()) - N * A * N
-    # print(L)
     A = g.adj().to_dense()
     N = torch.diag(torch.Tensor(dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5))
     L = torch.eye(g.num_nodes()) - N * A * N
 
+    # Compute the eigendecomposition
     EigVals, EigVecs = np.linalg.eigh(L.numpy())
-    # print(EigVals)
-    # print(EigVecs)
 
     # Normalize and pad EigenVectors
-    
     EigVals = np.sort(np.abs(np.real(EigVals)))
 
     if n < max_freqs:
         EigVals = np.pad(EigVals, (0, max_freqs - n), 'constant', constant_values=(1))
         EigVecs = np.pad(EigVecs, (0, max_freqs - n), 'constant', constant_values=(1))
-
-    
     EigVals, EigVecs = EigVals[: max_freqs], EigVecs[:, :max_freqs]
 
     if EigVecs.shape[1] < 32:
         EigVecs = np.resize(EigVecs, (EigVecs.shape[0], 32))
         #np.append(EigVecs, np.ones((EigVecs.shape[0],16 - EigVecs.shape[1])),axis=1)
 
+    return EigVals, EigVecs
 
+def original_laplace_decomp(g, max_freqs):
+    """
+    Compute the eigendecomposition of the laplacian of a graph
+    :param g: DGL graph
+    :param max_freqs: Number of eigenvectors to compute
+    :return: Eigenvalues and Eigenvectors
+    """
+    # Compute the Laplacian matrix
+    n = g.num_nodes()
+    A = g.adj().to_dense()
+    D = torch.diag(torch.Tensor(dgl.backend.asnumpy(g.in_degrees())))
+    L = D - A
+
+    # Compute the eigendecomposition
+    EigVals, EigVecs = np.linalg.eigh(L.numpy())
+
+    # Normalize and pad EigenVectors
+    EigVals = np.sort(np.abs(np.real(EigVals)))
+
+    if n < max_freqs:
+        EigVals = np.pad(EigVals, (0, max_freqs - n), 'constant', constant_values=(1))
+        EigVecs = np.pad(EigVecs, (0, max_freqs - n), 'constant', constant_values=(1))
+    
+    EigVals, EigVecs = EigVals[: max_freqs], EigVecs[:, :max_freqs]
     return EigVals, EigVecs
 
 def make_full_graph(g):
@@ -87,27 +109,20 @@ def add_structural_feats(g, k=3, k0=16):
     """
     Add structural features using k_hop extractor
     :param g:
-    :return:
+    :param k: number of hops
+    :param k0: number of eigenvalues to keep
+    :return: g with structural features
     """
     # Add local structural to encoding (SE)
-    # sampler = dgl.dataloading.ShaDowKHopSampler([10, 5, 5]) # using 3 hop
-    # dataloader = dgl.dataloading.DataLoader(g, torch.arange(g.num_nodes()), sampler, 
-    #                                 batch_size=1, shuffle=False, drop_last=False)
-    subgraphs = []
-    for node in g.nodes():
-        sg, inverse_indices = dgl.khop_out_subgraph(g, node, k)
-        subgraphs.append(sg)
-    # SE = []
-    # for input_nodes, output_nodes, subgraph in dataloader:
-    #     # extract eigen val and vector from subgraph and to contruct the structure of each node
-
-    #     EigVals, EigVecs = laplace_decomp(subgraph, 32)
-    #     SE.append(EigVals)
-    eigenvalues = []
-    for subgraph in subgraphs:
-        eigvalues, _ = laplace_decomp(subgraph, k0)
-        eigenvalues.append(eigvalues)
-    SE = eigenvalues
+    sampler = dgl.dataloading.ShaDowKHopSampler([10, 5, 5]) # using 3 hop
+    dataloader = dgl.dataloading.DataLoader(g, torch.arange(g.num_nodes()), sampler, 
+                                    batch_size=1, shuffle=False, drop_last=False)
+    SE = []
+    for input_nodes, output_nodes, subgraph in dataloader:
+        # extract eigen val and vector from subgraph and to contruct the structure of each node
+        EigVals, EigVecs = original_laplace_decomp(subgraph, 32)
+        SE.append(EigVals)
+        
     SE = np.asarray(SE)
     if np.isnan(SE.any()):
         print('SE')
