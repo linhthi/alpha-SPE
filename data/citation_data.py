@@ -61,4 +61,3 @@ class CitationDataset(torch.utils.data.Dataset):
         print("[I] Structural features time: {:.4f}s".format(time.time() - start))
   
 
-

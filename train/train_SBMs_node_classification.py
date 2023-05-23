@@ -20,11 +20,11 @@ def train_epoch(model, optimizer, device, data_loader, epoch):
         batch_graphs = batch_graphs.to(device)
         batch_x = batch_graphs.ndata['feat'].to(device)
         batch_e = batch_graphs.edata['feat'].flatten().long().to(device)
-        print(batch_graphs.nodes().size(), batch_x.size())
+        # print("Batch: ", batch_graphs.nodes().size(), batch_x.size())
 
         batch_labels = batch_labels.to(device)
         optimizer.zero_grad()
-        print(batch_labels.size())
+        # print(batch_labels.size())
         batch_scores = model.forward(batch_graphs, batch_x)
 
         loss = model.loss(batch_scores, batch_labels)
