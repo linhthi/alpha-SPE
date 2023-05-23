@@ -21,7 +21,7 @@ class SPE_TransformerNet(nn.Module):
 
 
         in_dim_node = net_params['in_dim'] # node_dim (feat is an integer)
-        self.n_classes = net_params['n_classes']
+        # self.n_classes = net_params['n_classes']
         
         self.alpha = net_params['alpha']
         
@@ -62,7 +62,7 @@ class SPE_TransformerNet(nn.Module):
         
         self.layers.append(GraphTransformerLayer(GT_hidden_dim, GT_out_dim, GT_n_heads, dropout, self.layer_norm, self.batch_norm, self.residual))
 
-        self.MLP_layer = MLPReadout(GT_out_dim, self.n_classes)
+        self.MLP_layer = MLPReadout(GT_out_dim, 11)
 
 
     def forward(self, g, h, e):
@@ -73,22 +73,36 @@ class SPE_TransformerNet(nn.Module):
         mEigVals = mEigVals.repeat(k, 1)
         # mEigVecs = EigVecs[:, :self.m].to(self.device)
         PE_raw = torch.cat([mEigVals, EigVecs], dim=1).to(self.device)
-        # print(EigVecs.shape, mEigVals.shape)
 
         h_se = g.ndata['SE']
         h_se = self.embedding_se(h_se)
+        
+        if torch.isnan(h.view(-1)).sum().item() != 0:
+            print('is nan after se')
+    
+
         h_pe = PE_raw
         h_pe = self.embedding_pe(h_pe)
         h_spe = (1-self.alpha)*h_pe + self.alpha*h_se
+        
+        if torch.isnan(h.view(-1)).sum().item() != 0:
+            print('is nan after se + pe')
 
         h = self.embedding_h(h)
         h = self.in_feat_dropout(h)
         h = torch.cat([h, h_spe], dim=1)
         
+        if torch.isnan(h.view(-1)).sum().item() != 0:
+            print('is nan after h_spe')
+        
         
         # GraphTransformer Layers
-        for conv in self.layers:
+        for i, conv in enumerate(self.layers):
             h = conv(g, h)
+            if torch.isnan(h.view(-1)).sum().item() != 0:
+                print(' i = ', i)
+                print('is nan after conv')
+
         
         g.ndata['h'] = h
 
@@ -108,7 +122,8 @@ class SPE_TransformerNet(nn.Module):
     
     
     def loss(self, pred, label):
-        criterion = nn.CrossEntropyLoss()
+        criterion = nn.L1Loss()
+        # print(pred.shape, label.shape)
         loss = criterion(pred, label)
         return loss
 

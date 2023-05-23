@@ -1,0 +1,58 @@
+{
+    "gpu": {
+        "use": false,
+        "id": 0
+    },
+
+    "model": "SAN_NodeLPE",
+    "dataset": "lrgb",
+
+    "out_dir": "out/lrgb/full/1e-3",
+
+    "params": {
+        "seed": 100,
+        "epochs": 500,
+        "batch_size": 128,
+        "init_lr": 1e-3,
+        "lr_reduce_factor": 0.8,
+        "lr_schedule_patience": 20,
+        "min_lr": 1e-5,
+        "weight_decay": 0.0,
+        "print_epoch_interval": 1,
+        "max_time": 24
+    },
+
+    "net_params": {
+        "model": "spe",
+        "full_graph": true,
+        "laplace_decomp": true,
+        "m": 32,
+
+        "alpha": 0.5,
+        "k": 32,
+        "gamma": 1e-3,
+
+        "in_dim": 9,
+        "n_layers": 1,
+        "hidden_dim": 16,
+        "out_dim": 16,
+
+        "LPE_layers": 1,
+        "LPE_dim": 16,
+        "LPE_n_heads": 4,
+
+        "GT_layers": 4,
+        "GT_hidden_dim": 100,
+        "GT_out_dim": 100,
+        "GT_n_heads": 4, 
+        "spe_hidden_dim": 32,
+
+        "residual": true,
+        "readout": "mean",
+        "in_feat_dropout": 0.0,
+        "dropout": 0.2,
+        "layer_norm": false,
+        "batch_norm": true
+    }
+}
+

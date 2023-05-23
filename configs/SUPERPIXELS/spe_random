@@ -5,15 +5,16 @@
     },
 
     "model": "SPE",
-    "dataset": "cora",
+    "dataset": "MNIST",
+    "use_spe": true,
 
-    "out_dir": "out/citation/cora/full/1e-3",
+    "out_dir": "out/superpixels/mnist/full/1e-4",
 
     "params": {
         "seed": 42,
-        "epochs": 100,
-        "batch_size": 64,
-        "init_lr": 0.001,
+        "epochs": 50,
+        "batch_size": 128,
+        "init_lr": 0.0001,
         "lr_reduce_factor": 0.5,
         "lr_schedule_patience": 60,
         "min_lr": 1e-4,
@@ -26,9 +27,9 @@
         "model": "spe",
         "full_graph": true,
         "laplace_decomp": true,
-        "m": 20,
+        "m": 32,
 
-        "alpha": 0.0,
+        "alpha": 0.5,
         "k": 32,
 
         "n_layers": 3,
@@ -36,19 +37,19 @@
         "out_dim": 32,
 
         "LSE_layers": 1,
-        "LSE_dim": 32,
+        "LSE_dim": 16,
         "LSE_n_heads": 4,
 
-        "GT_layers": 4,
-        "GT_hidden_dim": 64,
-        "GT_out_dim": 64,
-        "GT_n_heads": 8, 
-        "spe_hidden_dim": 128,
+        "GT_layers": 3,
+        "GT_hidden_dim": 32,
+        "GT_out_dim": 32,
+        "GT_n_heads": 4, 
+        "spe_hidden_dim": 16,
 
         "residual": true,
         "readout": "mean",
-        "in_feat_dropout": 0.7,
-        "dropout": 0.7,
+        "in_feat_dropout": 0.5,
+        "dropout": 0.5,
         "layer_norm": true,
         "batch_norm": true
     }
