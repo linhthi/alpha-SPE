@@ -19,6 +19,7 @@ class GCNNet(nn.Module):
         dropout = net_params['dropout']
         in_feat_dropout = net_params['in_feat_dropout']
 
+        self.learn_alpha = net_params['learn_alpha']
         if not net_params['learn_alpha']:
             self.alpha = net_params['alpha']
 
@@ -47,7 +48,7 @@ class GCNNet(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, g, h):
-        EigVals, EigVecs = g.EigVals, g.EigVecs
+        EigVals, EigVecs = g.ndata['EigVals'], g.ndata['EigVecs']
 
         m = self.m
         k = len(EigVals)
