@@ -291,7 +291,7 @@ def main():
         DATASET_NAME = args.dataset
     else:
         DATASET_NAME = config['dataset']
-    dataset = load_data(DATASET_NAME, use_spe=config['use_spe'])
+    dataset = load_data(DATASET_NAME)
     if args.out_dir is not None:
         out_dir = args.out_dir
     else:

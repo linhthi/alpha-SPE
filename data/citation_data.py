@@ -16,7 +16,8 @@ import data.precompute_features as pf
 from dgl import LaplacianPE, RandomWalkPE
 
 from dgl.data import CoraGraphDataset, CiteseerGraphDataset, RedditDataset, PubmedGraphDataset
-
+from dgl import save_graphs, load_graphs
+from dgl.data.utils import makedirs, save_info, load_info
 
 class CitationDataset(torch.utils.data.Dataset):
 
@@ -25,23 +26,15 @@ class CitationDataset(torch.utils.data.Dataset):
             Loading SBM datasets
         """
         start = time.time()
-        print("[I] Loading dataset %s..." % (name))
         self.name = name
-        dataset = None
-        if name == 'CORA':
-            dataset = CoraGraphDataset()
-        elif name == 'CITESEER':
-            dataset = CiteseerGraphDataset()
-        elif name == 'PUBMED':
-            dataset = PubmedGraphDataset()
-        graph = dataset[0]
-        self.num_classes = dataset.num_classes
-        self.graph = graph
-        self.train = graph.ndata['train_mask']
-        self.val = graph.ndata['val_mask']
-        self.test = graph.ndata['test_mask']
-        self.labels = graph.ndata['label']
+        self.mode = 'full'
+        print("[I] Loading dataset %s..." % (name))
+        self.save_path = 'data/processed/citation.{}/'.format(name)
 
+        if not self.has_cache():
+            self.create_and_save()
+        else:
+            self.load()
               
         # print('train, test, val sizes :', len(self.train), len(self.test), len(self.val))
         print("[I] Finished loading.")
@@ -59,5 +52,49 @@ class CitationDataset(torch.utils.data.Dataset):
         self.graph.ndata['EigVals'] = FullEigVals
         print("[I] Finished adding structural features.")
         print("[I] Structural features time: {:.4f}s".format(time.time() - start))
-  
+    
+    def create_and_save(self):
+        dataset = None
+        if self.name == 'CORA':
+            dataset = CoraGraphDataset()
+        elif self.name == 'CITESEER':
+            dataset = CiteseerGraphDataset()
+        elif self.name == 'PUBMED':
+            dataset = PubmedGraphDataset()
+        graph = dataset[0]
+        self.num_classes = dataset.num_classes
+        self.graph = graph
+        self.train = graph.ndata['train_mask']
+        self.val = graph.ndata['val_mask']
+        self.test = graph.ndata['test_mask']
+        self.labels = graph.ndata['label']
 
+        self.add_spe()
+        self.graphs = [self.graph]
+        self.labels = [self.labels]
+
+        # save graphs and labels
+        graph_path = os.path.join(self.save_path, self.mode + '_dgl_graph.bin')
+        save_graphs(graph_path, self.graphs, {'labels': self.labels})
+        # save other information in python dict
+        info_path = os.path.join(self.save_path, self.mode + '_info.pkl')
+        save_info(info_path, {'num_classes': self.num_classes})
+
+    def load(self):
+        # load processed data from directory `self.save_path`
+        graph_path = os.path.join(self.save_path, self.mode + '_dgl_graph.bin')
+        self.graphs, label_dict = load_graphs(graph_path)
+        self.labels = label_dict['labels']
+        self.graph = self.graphs[0]
+        self.train = self.graph.ndata['train_mask']
+        self.val = self.graph.ndata['val_mask']
+        self.test = self.graph.ndata['test_mask']
+        self.labels = self.labels[0]
+        info_path = os.path.join(self.save_path, self.mode + '_info.pkl')
+        self.num_classes = load_info(info_path)['num_classes']
+
+    def has_cache(self):
+        # check whether there are processed data in `self.save_path`
+        graph_path = os.path.join(self.save_path, self.mode + '_dgl_graph.bin')
+        info_path = os.path.join(self.save_path, self.mode + '_info.pkl')
+        return os.path.exists(graph_path) and os.path.exists(info_path)

@@ -6,7 +6,6 @@
 
     "model": "GCN",
     "dataset": "cora",
-    "use_spe": true,
 
     "out_dir": "out/citation/cora/full/1e-1/node",
 
@@ -26,7 +25,6 @@
     "net_params": {
         "model": "gcn",
         "full_graph": true,
-        "use_spe": true,
         "laplace_decomp": true,
         "m": 20,
 
