@@ -61,6 +61,7 @@ class CitationDataset(torch.utils.data.Dataset):
             dataset = CiteseerGraphDataset()
         elif self.name == 'PUBMED':
             dataset = PubmedGraphDataset()
+        self.dataset = dataset
         graph = dataset[0]
         self.num_classes = dataset.num_classes
         self.graph = graph
@@ -75,7 +76,7 @@ class CitationDataset(torch.utils.data.Dataset):
 
         # save graphs and labels
         graph_path = os.path.join(self.save_path, self.mode + '_dgl_graph.bin')
-        save_graphs(graph_path, self.graphs, {'labels': self.labels})
+        save_graphs(graph_path, self.dataset, {'labels': self.labels})
         # save other information in python dict
         info_path = os.path.join(self.save_path, self.mode + '_info.pkl')
         save_info(info_path, {'num_classes': self.num_classes})
