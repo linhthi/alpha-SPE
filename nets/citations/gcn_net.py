@@ -33,7 +33,7 @@ class GCNNet(nn.Module):
         self.device = net_params['device']
         self.in_feat_dropout = nn.Dropout(in_feat_dropout)
 
-        self.embedding_h = nn.Linear(in_dim, hidden_dim)
+        self.embedding_h = nn.Linear(in_dim, hidden_dim - spe_hidden_dim)
         self.embedding_pe = MLP(in_dim=self.m * 2, hidden_dim=hidden_dim, out_dim=spe_hidden_dim, n_layers=4, dropout=dropout)
         self.embedding_se = MLP(in_dim=k, hidden_dim=hidden_dim, out_dim=spe_hidden_dim, n_layers=4, dropout=dropout)
 
@@ -41,8 +41,8 @@ class GCNNet(nn.Module):
             self.w_alpha = nn.Linear(2 * spe_hidden_dim, 1)
 
         self.layers = nn.ModuleList()
-        self.layers.append(dglnn.GraphConv(in_dim, hidden_dim, activation=F.relu))
-        for i in range(n_layers - 2):
+        # self.layers.append(dglnn.GraphConv(in_dim, hidden_dim, activation=F.relu))
+        for i in range(n_layers - 1):
             self.layers.append(dglnn.GraphConv(hidden_dim, hidden_dim, activation=F.relu))
         self.layers.append(dglnn.GraphConv(hidden_dim, out_dim))
         self.dropout = nn.Dropout(dropout)
