@@ -26,12 +26,18 @@
     "net_params": {
         "model": "gcn",
         "full_graph": true,
-        "gamma": 1e-1,
-        "m": 10,
+        "use_spe": true,
+        "laplace_decomp": true,
+        "m": 20,
+
+        "learn_alpha": false,
+        "spe_hidden_dim": 32,
+        "alpha": 0.3,
+        "k": 16,
 
         "n_layers": 3,
         "hidden_dim": 128,
-        "out_dim": 48,
+        "out_dim": 32,
 
         "residual": true,
         "readout": "mean",

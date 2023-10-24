@@ -120,7 +120,7 @@ def add_structural_feats(g, k=3, k0=16):
     SE = []
     for input_nodes, output_nodes, subgraph in dataloader:
         # extract eigen val and vector from subgraph and to contruct the structure of each node
-        EigVals, EigVecs = original_laplace_decomp(subgraph, 32)
+        EigVals, EigVecs = original_laplace_decomp(subgraph, 16)
         SE.append(EigVals)
         
     SE = np.asarray(SE)

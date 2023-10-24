@@ -72,20 +72,9 @@ class LRGBDGLDataset(DGLDataset):
                 # Adding postional features: Eigen values and Eigen vectors
                 FullEigVals, FullEigVecs = pf.laplace_decomp(g, num_nodes)
 
-                sum_abs = np.sum(np.abs(FullEigVecs[:, :32]), axis=1)
-
-                # FullEigVecs[sum_abs < 1e-6, :] += 1e-6
-            
-                #print(graph_id, FullEigVecs.shape, sum_abs.shape)
-                #print(len(FullEigVecs[sum_abs<1e-5]))
-
                 FullEigVecs = torch.FloatTensor(FullEigVecs)
                 FullEigVecs = F.normalize(FullEigVecs, p=2, dim=1, eps=1e-12, out=None)
                 after_nomal = FullEigVecs.numpy()
-
-                sum_abs = np.sum(np.abs(after_nomal[:, :32]), axis=1)
-                #print(graph_id, sum_abs.shape)
-                #print('After normal: ', len(after_nomal[sum_abs<1e-5]))
 
                 g.ndata['EigVals'] = torch.FloatTensor(FullEigVals)
                 g.ndata['EigVecs'] = torch.FloatTensor(FullEigVecs[:, :32])
@@ -136,9 +125,7 @@ class LRGBDataset(torch.utils.data.Dataset):
         df_train = df.iloc[mask["train"]].copy().reset_index(drop=True)
         df_val = df.iloc[mask["val"]].copy().reset_index(drop=True)
         df_test = df.iloc[mask["test"]].copy().reset_index(drop=True)
-        # df_train = df.iloc[mask["train"][:32]].copy().reset_index(drop=True)
-        # df_val = df.iloc[mask["val"][:100]].copy().reset_index(drop=True)
-        # df_test = df.iloc[mask["test"][:32]].copy().reset_index(drop=True)
+
         print("Got train data: ", df_train.shape)
         print("Got val data: ", df_val.shape)
         print("Got test data: ", df_test.shape)
@@ -149,27 +136,7 @@ class LRGBDataset(torch.utils.data.Dataset):
 
     def collate(self, samples):
         graphs, labels = map(list, zip(*samples))
-        #labels = torch.cat(labels).long()
         labels = torch.cat(labels)
-        #print(labels.shape)
-        #for idx, graph in enumerate(graphs):
-        #    graphs[idx].ndata['feat'] = graph.ndata['feat'].float()
-        #    graphs[idx].edata['feat'] = graph.edata['feat'].float()
-            # Adding structural features
-        #    graphs[idx].ndata['SE'] = pf.add_structural_feats(graph)
-            # Adding postional features: Eigen values and Eigen vectors
-        #    FullEigVals, FullEigVecs = pf.laplace_decomp(graph, graph.num_nodes())
-        #    if FullEigVecs.shape[1] < 16:
-        #        FullEigVecs = np.resize(FullEigVecs, (FullEigVecs.shape[0], 16))
-
-        #    graphs[idx].ndata['EigVals'] = torch.Tensor(FullEigVals)
-        #    graphs[idx].ndata['EigVecs'] = torch.Tensor(FullEigVecs[:, :16])
         batched_graph = dgl.batch(graphs)
 
         return batched_graph, labels.reshape((-1, 11))
-
-    def _add_self_loops(self):
-        # Add all self loops for training and validation and test
-        for graph in self.train.graphs:
-
-            

@@ -29,7 +29,7 @@
         "laplace_decomp": true,
         "m": 20,
         
-        "learn_alpha": false,
+        "learn_alpha": true,
         "alpha": 0.0,
         "k": 16,
 

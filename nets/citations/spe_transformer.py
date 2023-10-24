@@ -20,7 +20,6 @@ class SPETransformer(nn.Module):
     def __init__(self, net_params):
         super().__init__()
 
-
         in_dim_node = net_params['in_dim'] # node_dim (feat is an integer)
         self.n_classes = net_params['n_classes']
         
@@ -60,9 +59,9 @@ class SPETransformer(nn.Module):
         self.embedding_h = nn.Linear(in_dim_node, GT_hidden_dim-spe_hidden_dim)
         self.embedding_se = MLP(in_dim=k, hidden_dim=hidden_dim, out_dim=spe_hidden_dim, n_layers=4, dropout=dropout)
         self.embedding_pe = MLP(in_dim=self.m*2, hidden_dim=hidden_dim, out_dim=spe_hidden_dim, n_layers=4, dropout=dropout)
+        self.adv_layer = nn.Linear(spe_hidden_dim, spe_hidden_dim)
 
         if self.learn_alpha:
-            #self.w_alpha = nn.Conv1d(2, 1, kernel_size=1, bias=False)
             self.w_alpha = nn.Parameter(torch.rand(1))
 
         encoder_layer = nn.TransformerEncoderLayer(d_model=LSE_dim, nhead=LSE_n_heads)
@@ -76,35 +75,44 @@ class SPETransformer(nn.Module):
 
 
     def forward(self, g, h):
-        
         EigVals, EigVecs = g.EigVals, g.EigVecs
-        # mEigVecs = EigVecs[:, :self.m].to(self.device) # previous version
+
         m = self.m
         k = len(EigVals)
+
         mEigVals = torch.Tensor(EigVals[:m])
         mEigVals = mEigVals.repeat(k, 1) 
-        mEigVecs = EigVecs[:, :m]
-        PE_raw = torch.cat([mEigVals, mEigVecs], dim=1).to(self.device)
+        mEigVecs = torch.Tensor(EigVecs[:, :m])
 
+        # Positional Embedding
+        PE_raw = torch.cat([mEigVals, mEigVecs], dim=1).to(self.device)
+        h_pe = self.embedding_pe(PE_raw)
+
+        # Structural Embedding
         h_se = g.ndata['SE']
-        print(h_se.get_device())
         h_se = self.embedding_se(h_se)
-        h_pe = PE_raw
-        h_pe = self.embedding_pe(h_pe)
+
+        # Structural Positional Embedding
         if not self.learn_alpha:
             h_spe = (1-self.alpha)*h_pe + self.alpha*h_se
+        elif self.learn_alpha == 'concat':
+            h_se1 = torch.unsqueeze(h_se, 1)
+            h_pe1 = torch.unsqueeze(h_pe, 1)
+
+            h_tmp = torch.cat([h_se1, h_pe1], dim=1)
+            h_tmp = self.w_alpha(h_tmp)
+
+            h_spe = torch.squeeze(h_tmp, 1)
         else:
-            #h_se1 = torch.unsqueeze(h_se, 1)
-            #h_pe1 = torch.unsqueeze(h_pe, 1)
-
-            #h_tmp = torch.cat([h_se1, h_pe1], dim=1)
-            #h_tmp = self.w_alpha(h_tmp)
-
-            #h_spe = torch.squeeze(h_tmp, 1)
             w = self.w_alpha
             h_spe = w*h_se + (1 - w)*h_pe
 
         g.ndata['SPE'] = h_spe
+
+        # h_adv = self.adv_layer(h_se)
+        # h_adv = torch.squeeze(h_adv, 1)
+        
+        # h_spe = h_spe - 0.01*h_adv
 
         h = self.embedding_h(h)
         h = self.in_feat_dropout(h)
