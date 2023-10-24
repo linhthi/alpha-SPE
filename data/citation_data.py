@@ -55,8 +55,8 @@ class CitationDataset(torch.utils.data.Dataset):
 
         # Add global structural to encoding (GSPE)
         FullEigVals, FullEigVecs = pf.laplace_decomp(self.graph, self.graph.num_nodes())
-        self.graph.EigVecs = FullEigVecs
-        self.graph.EigVals = FullEigVals
+        self.graph.ndata['EigVecs'] = FullEigVecs
+        self.graph.ndata['EigVals'] = FullEigVals
         print("[I] Finished adding structural features.")
         print("[I] Structural features time: {:.4f}s".format(time.time() - start))
   
